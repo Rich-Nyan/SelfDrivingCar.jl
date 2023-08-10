@@ -96,5 +96,5 @@ function plotter(str::AbstractString)
     gif(gify, "plots/" * filename * ".gif", fps = 15)
 end
 
-plotter("trajectory/test3.txt")
+plotter("trajectory/test1.txt")
 

@@ -22,8 +22,8 @@ using Plots
 # Values
 T = 100
 dt = 0.1
-initial_pose = [3,5,0,1.0]
-final_pose = [7,5, pi, 1.0]
+initial_pose = [0,0,0,0]
+final_pose = [1,0,0,0]
 
 z_guess = ones(6 * T)
 λ_guess = ones(4 * T + 4)
@@ -59,8 +59,11 @@ function dynamic_feasibility(z)
     h[4] = x[4] - (initial_pose[4] + dt * u[2])
     # Intermediate Poses
     for i in 1:T-1
-        h[4*i+1] = x[4*i+1] - (x[4*i-3] + dt * (cos(x[4*i-1] * x[4*i])))
-        h[4*i+2] = x[4*i+2] - (x[4*i-2] + dt * (sin(x[4*i-1] * x[4*i])))
+        cos_theta = cos(x[4*i-1])
+        sin_theta = sin(x[4*i-1])
+
+        h[4*i+1] = x[4*i+1] - (x[4*i-3] + dt * (cos_theta * x[4*i]))
+        h[4*i+2] = x[4*i+2] - (x[4*i-2] + dt * (sin_theta * x[4*i]))
         h[4*i+3] = x[4*i+3] - (x[4*i-1] + dt * u[2*i+1])
         h[4*i+4] = x[4*i+4] - (x[4*i] + dt * u[2*i+2])
     end
@@ -119,7 +122,7 @@ function optimizer()
         end
     end
 
-    open("trajectory/test3.txt", "w") do io
+    open("trajectory/test2.txt", "w") do io
         for i in 1:iter
             for j in 1:T
                 println(io, states[i, j, 1], ",", states[i, j, 2], ",", states[i, j, 3], ",", states[i, j, 4])
