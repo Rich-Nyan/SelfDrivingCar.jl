@@ -3,7 +3,7 @@ using Plots
 
 function plotter(str::AbstractString)
     T = 100
-    iterations = [1,2,3,4,5,10]
+    iterations = [1,2,3,4,5,10,100]
     iter = length(iterations)
 
     reader = readlines(str)
@@ -96,5 +96,5 @@ function plotter(str::AbstractString)
     gif(gify, "plots/" * filename * ".gif", fps = 15)
 end
 
-plotter("trajectory/test1.txt")
+plotter("trajectory/test9.txt")
 

@@ -2,6 +2,7 @@ using Optim
 using LinearAlgebra
 using ForwardDiff
 using Plots
+
 # Starts at time stamp 0
 
 # x
@@ -22,13 +23,12 @@ using Plots
 # Values
 T = 100
 dt = 0.1
-initial_pose = [0,0,0,0]
-final_pose = [1,0,0,0]
+initial_pose = [0,0,pi/2,0]
+final_pose = [3,3,0,0]
 
-z_guess = ones(6 * T)
-λ_guess = ones(4 * T + 4)
+z_guess = ones(10 * T + 4)
 
-iterations = [1,2,3,4,5,10]
+iterations = [1,2,3,4,5,10,100]
 iter = length(iterations)
 
 function dynamics!(jacob, x, u)
@@ -39,7 +39,7 @@ function dynamics!(jacob, x, u)
 end
 
 function objective_function(z)
-    return norm(z[4*T+1:end])
+    return z[4*T+1:6*T]'*z[4*T+1:6*T]
 end
 # Constraints h(z)
 # h(z)
@@ -76,9 +76,9 @@ function dynamic_feasibility(z)
 end
 
 # Lagrange Multiplier
-function lagrangian(z, h_z)
+function lagrangian(z,λ, h_z)
     f_z = objective_function(z)
-    return f_z + dot(λ_guess, h_z)
+    return f_z + dot(λ, h_z)
 end
 
 # Newton
@@ -106,23 +106,29 @@ end
 #Optimize Function
 function optimizer()
 
-    function objective(z)
+    function KKT_conditions(big_vector)
+        z = big_vector[1:6*T]
+        λ = big_vector[6*T+1:end]
         h_z = dynamic_feasibility(z)
-        lagrange_gradient = ForwardDiff.gradient(z -> lagrangian(z, h_z), z)
+        lagrange_gradient = ForwardDiff.gradient(z -> lagrangian(z,λ, h_z), z)
         return vcat(lagrange_gradient,h_z)
     end
-    states = zeros(6,T,4)
+    states = zeros(length(iterations),T,4)
     for i in 1:iter
-        result = newton(objective, z_guess, 1e-6, iterations[i])
+        result = newton(KKT_conditions, z_guess, 1e-6, iterations[i])
         for j in 1:T
             states[i,j,1] = result[4*j-3]
             states[i,j,2] = result[4*j-2]
             states[i,j,3] = result[4*j-1]
             states[i,j,4] = result[4*j]
         end
+        # Main.@infiltrate
+        println("Objective: ",objective_function(result))
+        # println("KKT Conditions: ",KKT_conditions(result))
+
     end
 
-    open("trajectory/test2.txt", "w") do io
+    open("trajectory/test9.txt", "w") do io
         for i in 1:iter
             for j in 1:T
                 println(io, states[i, j, 1], ",", states[i, j, 2], ",", states[i, j, 3], ",", states[i, j, 4])
